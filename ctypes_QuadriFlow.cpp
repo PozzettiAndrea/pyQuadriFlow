@@ -18,7 +18,7 @@
 #elif __linux__
 #define DLLEXPORT 
 #elif __APPLE__
-// [ ] Implement 
+#define DLLEXPORT
 #endif
 
 
