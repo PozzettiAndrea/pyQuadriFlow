@@ -6,8 +6,7 @@ def load_library():
         QuadriFlow_clib = ctypes.CDLL(os.path.join(os.path.dirname(__file__),'ctypes_QuadriFlow.so'))
         pass
     elif platform == 'darwin':
-        # OSX 
-        pass
+        QuadriFlow_clib = ctypes.CDLL(os.path.join(os.path.dirname(__file__),'ctypes_QuadriFlow.dylib'))
     elif platform == 'win32':        
         here = os.path.dirname(__file__).replace('\\','/') 
         QuadriFlow_clib = ctypes.CDLL(os.path.join(here,"ctypes_QuadriFlow.dll"))

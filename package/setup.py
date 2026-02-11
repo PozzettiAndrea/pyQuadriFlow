@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 from pathlib import Path, os
 
 NAME = 'pyQuadriFlow'
-VERSION = '0.0.2'
+VERSION = '0.0.5'
 # - First Wrapper
 DESCRIPTION = 'Python QuadriFlow.'
 
@@ -19,7 +19,7 @@ setup(
     long_description_content_type='text/markdown',
     packages = find_packages(),
     include_package_data=True,
-    package_data={f'{NAME}.clib':['*.so','*.dll']}, # https://stackoverflow.com/questions/70334648/how-to-correctly-install-data-files-with-setup-py
+    package_data={f'{NAME}.clib':['*.so','*.dll','*.dylib']}, # https://stackoverflow.com/questions/70334648/how-to-correctly-install-data-files-with-setup-py
     install_requires = [],    
     keywords = ['quadriflow', 'quad', 'remeshing', 'quadrangulation',],
     classifiers= [

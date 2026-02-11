@@ -1,0 +1,164 @@
+name: Build & Release
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: ctypes_QuadriFlow.so
+          - os: macos-14
+            artifact: ctypes_QuadriFlow.dylib
+          - os: windows-latest
+            artifact: ctypes_QuadriFlow.dll
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libeigen3-dev libboost-dev cmake g++
+
+      - name: Install dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install eigen boost cmake
+
+      - name: Install dependencies (Windows)
+        if: runner.os == 'Windows'
+        run: |
+          vcpkg install eigen3:x64-windows boost-graph:x64-windows
+
+      - name: Clone QuadriFlow
+        run: |
+          git clone https://github.com/satabol/QuadriFlow quadriflow
+
+      - name: Build QuadriFlow (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          cd quadriflow
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          make -j$(nproc)
+
+      - name: Build QuadriFlow (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          cd quadriflow
+          mkdir build && cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_CXX_FLAGS="-fPIC" \
+            -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          make -j$(sysctl -n hw.ncpu)
+
+      - name: Build QuadriFlow (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          cd quadriflow
+          mkdir build
+          cd build
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_POLICY_DEFAULT_CMP0091=NEW -DCMAKE_MSVC_RUNTIME_LIBRARY=MultiThreadedDLL -DEIGEN_INCLUDE_DIR_HINTS="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows\include\eigen3" -DBoost_INCLUDE_DIR="%VCPKG_INSTALLATION_ROOT%\installed\x64-windows\include" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake --build . --config Release --target quadriflow
+          cmake --build . --config Release --target lemon
+
+      - name: Build ctypes wrapper (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          g++ ctypes_QuadriFlow.cpp \
+            -L./quadriflow/build -l:libquadriflow.a \
+            -L./quadriflow/build/3rd/lemon-1.3.1/lemon -l:libemon.a \
+            -I./quadriflow/src \
+            -I/usr/include/eigen3 \
+            -o package/src/pyQuadriFlow/clib/ctypes_QuadriFlow.so \
+            -fPIC -shared -std=c++14 -O2
+
+      - name: Build ctypes wrapper (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          clang++ ctypes_QuadriFlow.cpp \
+            -L./quadriflow/build -lquadriflow \
+            -L./quadriflow/build/3rd/lemon-1.3.1/lemon -lemon \
+            -I./quadriflow/src \
+            -I$(brew --prefix eigen)/include/eigen3 \
+            -o package/src/pyQuadriFlow/clib/ctypes_QuadriFlow.dylib \
+            -fPIC -shared -std=c++14 -O2 \
+            -arch arm64
+
+      - name: Setup MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Build ctypes wrapper (Windows)
+        if: runner.os == 'Windows'
+        shell: cmd
+        run: |
+          cl /EHsc /O2 /std:c++14 /MD /LD ^
+            /I"quadriflow\src" ^
+            /I"%VCPKG_INSTALLATION_ROOT%\installed\x64-windows\include\eigen3" ^
+            /I"%VCPKG_INSTALLATION_ROOT%\installed\x64-windows\include" ^
+            ctypes_QuadriFlow.cpp ^
+            /link /OUT:package\src\pyQuadriFlow\clib\ctypes_QuadriFlow.dll ^
+            quadriflow\build\Release\quadriflow.lib ^
+            quadriflow\build\3rd\lemon-1.3.1\lemon\Release\lemon.lib
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: package/src/pyQuadriFlow/clib/${{ matrix.artifact }}
+
+  package:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Collect binaries
+        run: |
+          cp artifacts/ctypes_QuadriFlow.so/ctypes_QuadriFlow.so package/src/pyQuadriFlow/clib/
+          cp artifacts/ctypes_QuadriFlow.dll/ctypes_QuadriFlow.dll package/src/pyQuadriFlow/clib/
+          cp artifacts/ctypes_QuadriFlow.dylib/ctypes_QuadriFlow.dylib package/src/pyQuadriFlow/clib/
+          ls -la package/src/pyQuadriFlow/clib/
+
+      - name: Build wheel
+        run: |
+          pip install build
+          cd package
+          python -m build --wheel
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: wheel
+          path: package/dist/*.whl
+
+      - name: Create GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            package/dist/*.whl
+            artifacts/ctypes_QuadriFlow.so/ctypes_QuadriFlow.so
+            artifacts/ctypes_QuadriFlow.dll/ctypes_QuadriFlow.dll
+            artifacts/ctypes_QuadriFlow.dylib/ctypes_QuadriFlow.dylib
