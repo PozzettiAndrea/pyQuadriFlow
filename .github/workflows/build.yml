@@ -12,12 +12,14 @@ jobs:
         include:
           - os: ubuntu-latest
             artifact: ctypes_QuadriFlow.so
+            container: quay.io/pypa/manylinux_2_28_x86_64
           - os: macos-14
             artifact: ctypes_QuadriFlow.dylib
           - os: windows-latest
             artifact: ctypes_QuadriFlow.dll
 
     runs-on: ${{ matrix.os }}
+    container: ${{ matrix.container || '' }}
 
     steps:
       - uses: actions/checkout@v4
@@ -25,8 +27,7 @@ jobs:
       - name: Install dependencies (Linux)
         if: runner.os == 'Linux'
         run: |
-          sudo apt-get update
-          sudo apt-get install -y libeigen3-dev libboost-dev cmake g++
+          yum install -y eigen3-devel boost-devel cmake gcc-c++ make
 
       - name: Install dependencies (macOS)
         if: runner.os == 'macOS'
