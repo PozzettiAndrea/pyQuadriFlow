@@ -48,7 +48,7 @@ jobs:
         run: |
           cd quadriflow
           mkdir build && cd build
-          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-fPIC" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
+          cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-fPIC -include cstdint" -DCMAKE_POLICY_VERSION_MINIMUM=3.5
           make -j$(nproc)
 
       - name: Build QuadriFlow (macOS)
@@ -82,7 +82,7 @@ jobs:
             -I./quadriflow/src \
             -I/usr/include/eigen3 \
             -o package/src/pyQuadriFlow/clib/ctypes_QuadriFlow.so \
-            -fPIC -shared -std=c++14 -O2
+            -fPIC -shared -std=c++14 -O2 -include cstdint
 
       - name: Build ctypes wrapper (macOS)
         if: runner.os == 'macOS'
