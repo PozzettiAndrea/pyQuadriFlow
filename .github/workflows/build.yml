@@ -6,7 +6,6 @@ on:
       - "v*"
     branches:
       - main
-      - master
   pull_request:
   workflow_dispatch:
 
@@ -95,7 +94,7 @@ jobs:
   # ── Release (only after tests pass) ─────────────────────────────
   release:
     name: Upload to GitHub Releases
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/tags/v')
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/tags/v')
     needs: [test, build_wheels, build_sdist]
     runs-on: ubuntu-latest
     permissions:
