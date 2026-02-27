@@ -1,0 +1,3 @@
+[submodule "quadriflow"]
+	path = quadriflow
+	url = https://github.com/satabol/QuadriFlow.git
