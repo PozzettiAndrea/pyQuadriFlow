@@ -45,28 +45,18 @@ test-requires = "numpy"
 
 [tool.cibuildwheel.linux]
 archs = ["x86_64"]
-before-all = """
-yum install -y eigen3-devel boost-devel || apt-get install -y libeigen3-dev libboost-dev || true
-cd /tmp && curl -L http://lemon.cs.elte.hu/pub/sources/lemon-1.3.1.tar.gz -o lemon.tar.gz
-tar xf lemon.tar.gz && cd lemon-1.3.1 && mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && make -j$(nproc) && make install
-"""
+before-all = "yum install -y eigen3-devel boost-devel || apt-get install -y libeigen3-dev libboost-dev || true"
 repair-wheel-command = "auditwheel repair -w {dest_dir} {wheel}"
 
 [tool.cibuildwheel.macos]
 archs = ["arm64"]
 environment = {MACOSX_DEPLOYMENT_TARGET = "11.0"}
-before-all = """
-brew install eigen boost cmake
-cd /tmp && curl -L http://lemon.cs.elte.hu/pub/sources/lemon-1.3.1.tar.gz -o lemon.tar.gz
-tar xf lemon.tar.gz && cd lemon-1.3.1 && mkdir build && cd build
-cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local && make -j$(sysctl -n hw.ncpu) && sudo make install
-"""
+before-all = "brew install eigen boost"
 repair-wheel-command = "delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
 
 [tool.cibuildwheel.windows]
 archs = ["AMD64"]
-before-all = "vcpkg install eigen3:x64-windows boost-graph:x64-windows lemon:x64-windows"
+before-all = "vcpkg install eigen3:x64-windows boost-graph:x64-windows"
 before-build = "pip install delvewheel"
 repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
 environment = {CMAKE_TOOLCHAIN_FILE = "C:/vcpkg/scripts/buildsystems/vcpkg.cmake"}
