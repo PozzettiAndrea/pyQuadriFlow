@@ -24,6 +24,11 @@ if(WIN32)
   set(CMAKE_MSVC_RUNTIME_LIBRARY MultiThreaded)
 endif()
 
+# Pre-set LEMON path so quadriflow's CMakeLists.txt finds the vendored copy
+# (it uses CMAKE_SOURCE_DIR which points here, not inside the quadriflow subdir)
+set(LEMON_SOURCE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/quadriflow/3rd/lemon-1.3.1"
+    CACHE PATH "LEMON source root" FORCE)
+
 # Build QuadriFlow — EXCLUDE_FROM_ALL suppresses its install rules and exe target
 add_subdirectory(quadriflow EXCLUDE_FROM_ALL)
 
