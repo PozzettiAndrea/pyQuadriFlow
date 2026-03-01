@@ -32,11 +32,15 @@ endif()
 set(LEMON_SOURCE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/quadriflow/3rd/lemon-1.3.1"
     CACHE PATH "LEMON source root" FORCE)
 
-# Find Eigen before quadriflow so we can add it to our targets
-find_package(Eigen REQUIRED)
+# FindEigen.cmake wrapper: maps Eigen3 (brew/system) to legacy EIGEN_INCLUDE_DIRS
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 # Build QuadriFlow — EXCLUDE_FROM_ALL suppresses its install rules and exe target
 add_subdirectory(quadriflow EXCLUDE_FROM_ALL)
+
+# Eigen include dirs are now set (via quadriflow's find_package or our wrapper)
+# Re-find to ensure EIGEN_INCLUDE_DIRS is available in this scope
+find_package(Eigen REQUIRED)
 
 # ---------------------------------------------------------------------------
 # Python + nanobind
