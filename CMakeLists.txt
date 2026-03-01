@@ -10,9 +10,8 @@ set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
-set(CMAKE_CXX_STANDARD 17)
-set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
-set(CMAKE_CXX_EXTENSIONS FALSE)
+# Don't set CXX_STANDARD globally — quadriflow + vendored LEMON need C++14.
+# We set C++17 per-target for our own code below.
 
 # Disable optional QuadriFlow features we don't need
 set(BUILD_PERFORMANCE_TEST OFF CACHE BOOL "" FORCE)
@@ -59,6 +58,7 @@ add_library(quadriflow_pipeline STATIC
 )
 
 target_link_libraries(quadriflow_pipeline PUBLIC quadriflow)
+set_target_properties(quadriflow_pipeline PROPERTIES CXX_STANDARD 17 CXX_STANDARD_REQUIRED ON)
 
 target_include_directories(quadriflow_pipeline PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/src
