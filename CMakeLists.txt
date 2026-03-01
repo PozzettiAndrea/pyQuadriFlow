@@ -1,8 +1,6 @@
 cmake_minimum_required(VERSION 3.15...3.26)
 project(pyquadriflow LANGUAGES C CXX)
 
-# Allow old cmake_minimum_required in vendored subprojects (CMake 4.x compat)
-set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
 
 # ---------------------------------------------------------------------------
 # Configure QuadriFlow as static library
