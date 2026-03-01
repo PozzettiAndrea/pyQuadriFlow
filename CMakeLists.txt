@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.15...3.26)
 project(pyquadriflow LANGUAGES C CXX)
 
+# Allow old cmake_minimum_required in vendored subprojects (CMake 4.x compat)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5 CACHE STRING "" FORCE)
+
 # ---------------------------------------------------------------------------
 # Configure QuadriFlow as static library
 # ---------------------------------------------------------------------------
@@ -29,6 +32,9 @@ endif()
 set(LEMON_SOURCE_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}/quadriflow/3rd/lemon-1.3.1"
     CACHE PATH "LEMON source root" FORCE)
 
+# Find Eigen before quadriflow so we can add it to our targets
+find_package(Eigen REQUIRED)
+
 # Build QuadriFlow — EXCLUDE_FROM_ALL suppresses its install rules and exe target
 add_subdirectory(quadriflow EXCLUDE_FROM_ALL)
 
@@ -56,6 +62,8 @@ target_include_directories(quadriflow_pipeline PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}/quadriflow/src
   ${CMAKE_CURRENT_SOURCE_DIR}/quadriflow/3rd/pcg32
   ${CMAKE_CURRENT_SOURCE_DIR}/quadriflow/3rd/pss
+  # Eigen (not propagated from quadriflow's include_directories)
+  ${EIGEN_INCLUDE_DIRS}
 )
 
 # ---------------------------------------------------------------------------
